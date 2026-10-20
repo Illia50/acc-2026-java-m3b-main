@@ -12,5 +12,9 @@ public class PaymentMethodFactory {
     public static PaymentMethod createGiftCardPayment (String providerName, String code, double balance){
         return new GiftCardPayment(providerName, code, balance);
     }
+
+    public static PaymentMethod createCryptoPayment(String walletAddress) {
+        return new CryptoPayment(walletAddress);
+    }
     // TODO: create factories for PayPal and gift card
 }

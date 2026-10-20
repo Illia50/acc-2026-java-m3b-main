@@ -1,5 +1,7 @@
 package org.example.model;
 
+import org.example.config.AppConfig;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,11 +10,18 @@ public class Order {
     private final List<OrderItem> items;
     private OrderStatus status;
     private Discount discount = new NoDiscount();
+    private Fee fee = amount -> 0;
 
     public Order(Builder builder) {
         this.customerName = builder.customerName;
         this.items = builder.items;
         this.status = OrderStatus.NEW;
+    }
+
+    public void applyFee(Fee fee) {
+        if (fee != null) {
+            this.fee = fee;
+        }
     }
 
     public void addItem(OrderItem item){
@@ -28,7 +37,8 @@ public class Order {
            sum += item.calculateTotal();
         }
         // TODO: calculate total from all order items (including discounts)
-        return discount.apply(sum);
+        //double discountedSum = discount.apply(sum);
+        return discount.apply(sum) + fee.applyFee(discount.apply(sum));
     }
 
     public void markAsPaid(){
@@ -61,6 +71,7 @@ public class Order {
     public static class Builder{
         private String customerName;
         private List<OrderItem> items = new ArrayList<>();
+        private String currency = "EUR";
         public Builder customerName(String customerName){
             this.customerName = customerName;
             return this;
@@ -69,9 +80,16 @@ public class Order {
             this.items.add(item);
             return this;
         }
+        public Builder currency(String currency) {
+            this.currency = currency;
+            return this;
+        }
         public Order build(){
             if (customerName == null || customerName.trim().isEmpty()) throw new IllegalArgumentException("Customer name cannot be null or blank");
             // TODO: validate customerName
+            if (!AppConfig.getInstance().isCurrencySupported(this.currency)) {
+                throw new IllegalArgumentException("Unsupported currency: " + this.currency);
+            }
             return new Order(this);
         }
     }
